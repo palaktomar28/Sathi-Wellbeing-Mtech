@@ -1,4 +1,4 @@
-# saathi-wellbeing
+# Sathi-Wellbeing- • saathi-wellbeing
 ### *A LITTLE SPACE FOR YOU*
 
 A production-ready full-stack AI screening system designed for Indian university students, predicting risk levels across **Depression (PHQ-9)**, **Anxiety (GAD-7)**, and **Stress (PSS-10)** using trained Linear SVC machine learning models.
