@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>saathi-wellbeing | A Little Space For You</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234f46e5'><path d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/></svg>">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- React 18 & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Babel for inline JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    @media print {
+      header, footer, .no-print { display: none !important; }
+      body { background: white !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const DEMOGRAPHIC_OPTIONS = {
+      Age: ["18-22", "23-26", "27-30", "Above 30", "Below 18"],
+      Gender: ["Female", "Male", "Prefer not to say"],
+      University: [
+        "Devi Ahilya Vishwavidyalaya (DAVV, Indore)",
+        "Indian Institute of Technology (IIT)",
+        "National Institute of Technology (NIT)",
+        "University of Delhi (DU)",
+        "Banaras Hindu University (BHU)",
+        "Jawaharlal Nehru University (JNU)",
+        "BITS Pilani",
+        "Rajiv Gandhi Proudyogiki Vishwavidyalaya (RGPV, Bhopal)",
+        "Savitribai Phule Pune University (SPPU)",
+        "University of Mumbai (MU)",
+        "Anna University, Chennai",
+        "Vellore Institute of Technology (VIT)",
+        "Manipal Academy of Higher Education (MAHE)",
+        "University of Calcutta",
+        "Other Indian University / Autonomous Institute",
+      ],
+      Department: [
+        "Engineering - CS / CSE / IT / Data Science",
+        "Engineering - Civil Engineering",
+        "Engineering - EEE / ECE / Electronics",
+        "Engineering - Mechanical / Automobile",
+        "Engineering - Other",
+        "Business and Management Studies (BBA/MBA)",
+        "Biological Sciences / Biotechnology",
+        "Environmental and Life Sciences",
+        "Law and Legal Studies",
+        "Liberal Arts, Humanities and Social Sciences",
+        "Pharmacy and Public Health",
+        "Other",
+      ],
+      Academic_Year: [
+        "First Year (Semester 1 - 2)",
+        "Second Year (Semester 3 - 4)",
+        "Third Year (Semester 5 - 6)",
+        "Fourth Year (Semester 7 - 8)",
+        "Postgraduate / Other",
+      ],
+      Current_CGPA: [
+        "9.00 - 10.00 (Outstanding / Distinction)",
+        "8.00 - 8.99 (First Class with Distinction)",
+        "7.00 - 7.99 (First Class)",
+        "6.00 - 6.99 (Second Class)",
+        "Below 6.00 (Pass Class / Needs Improvement)",
+        "Other",
+      ],
+      waiver_or_scholarship: ["No", "Yes"],
+    };
+
+    const PSS_OPTIONS = [
+      { value: 0, label: "Never", badge: "0" },
+      { value: 1, label: "Almost Never", badge: "1" },
+      { value: 2, label: "Sometimes", badge: "2" },
+      { value: 3, label: "Fairly Often", badge: "3" },
+      { value: 4, label: "Very Often", badge: "4" },
+    ];
+
+    const GAD_PHQ_OPTIONS = [
+      { value: 0, label: "Not at all", badge: "0" },
+      { value: 1, label: "Several days", badge: "1" },
+      { value: 2, label: "More than half the days", badge: "2" },
+      { value: 3, label: "Nearly every day", badge: "3" },
+    ];
+
+    const PSS_QUESTIONS = [
+      { id: "PSS1", text: "In the last month, how often have you been upset because of something that happened unexpectedly?" },
+      { id: "PSS2", text: "In the last month, how often have you felt that you were unable to control the important things in your life?" },
+      { id: "PSS3", text: "In the last month, how often have you felt nervous and stressed?" },
+      { id: "PSS4", text: "In the last month, how often have you felt confident about your ability to handle your personal problems?" },
+      { id: "PSS5", text: "In the last month, how often have you felt that things were going your way?" },
+      { id: "PSS6", text: "In the last month, how often have you found that you could not cope with all the things that you had to do?" },
+      { id: "PSS7", text: "In the last month, how often have you been able to control irritations in your life?" },
+      { id: "PSS8", text: "In the last month, how often have you felt that you were on top of things?" },
+      { id: "PSS9", text: "In the last month, how often have you been angered because of things that happened that were outside of your control?" },
+      { id: "PSS10", text: "In the last month, how often have you felt difficulties were piling up so high that you could not overcome them?" },
+    ];
+
+    const GAD_QUESTIONS = [
+      { id: "GAD1", text: "Feeling nervous, anxious, or on edge" },
+      { id: "GAD2", text: "Not being able to stop or control worrying" },
+      { id: "GAD3", text: "Worrying too much about different things" },
+      { id: "GAD4", text: "Trouble relaxing" },
+      { id: "GAD5", text: "Being so restless that it's hard to sit still" },
+      { id: "GAD6", text: "Becoming easily annoyed or irritable" },
+      { id: "GAD7", text: "Feeling afraid, as if something awful might happen" },
+    ];
+
+    const PHQ_QUESTIONS = [
+      { id: "PHQ1", text: "Little interest or pleasure in doing things" },
+      { id: "PHQ2", text: "Feeling down, depressed, or hopeless" },
+      { id: "PHQ3", text: "Trouble falling or staying asleep, or sleeping too much" },
+      { id: "PHQ4", text: "Feeling tired or having little energy" },
+      { id: "PHQ5", text: "Poor appetite or overeating" },
+      { id: "PHQ6", text: "Feeling bad about yourself — or that you are a failure or have let yourself or your family down" },
+      { id: "PHQ7", text: "Trouble concentrating on things, such as reading the newspaper or watching television" },
+      { id: "PHQ8", text: "Moving or speaking so slowly that other people could have noticed, or being unusually fidgety" },
+      { id: "PHQ9", text: "Thoughts that you would be better off dead, or of hurting yourself in some way", critical: true },
+    ];
+
+    const PRESET_PROFILES = {
+      davvStudent: {
+        title: "DAVV Student (Well-Balanced)",
+        description: "Devi Ahilya Vishwavidyalaya, Indore • Balanced academic life.",
+        data: {
+          Age: "18-22",
+          Gender: "Female",
+          University: "Devi Ahilya Vishwavidyalaya (DAVV, Indore)",
+          Department: "Engineering - CS / CSE / IT / Data Science",
+          Academic_Year: "Second Year (Semester 3 - 4)",
+          Current_CGPA: "8.00 - 8.99 (First Class with Distinction)",
+          waiver_or_scholarship: "Yes",
+          PSS1: 1, PSS2: 0, PSS3: 1, PSS4: 3, PSS5: 3, PSS6: 0, PSS7: 3, PSS8: 3, PSS9: 1, PSS10: 0,
+          GAD1: 0, GAD2: 0, GAD3: 1, GAD4: 0, GAD5: 0, GAD6: 0, GAD7: 0,
+          PHQ1: 0, PHQ2: 0, PHQ3: 0, PHQ4: 1, PHQ5: 0, PHQ6: 0, PHQ7: 0, PHQ8: 0, PHQ9: 0,
+        },
+      },
+      examStress: {
+        title: "Semester Exam Stress (Moderate)",
+        description: "Devi Ahilya Vishwavidyalaya • High workload, exam pressure.",
+        data: {
+          Age: "23-26",
+          Gender: "Male",
+          University: "Devi Ahilya Vishwavidyalaya (DAVV, Indore)",
+          Department: "Engineering - CS / CSE / IT / Data Science",
+          Academic_Year: "Third Year (Semester 5 - 6)",
+          Current_CGPA: "7.00 - 7.99 (First Class)",
+          waiver_or_scholarship: "No",
+          PSS1: 3, PSS2: 3, PSS3: 4, PSS4: 1, PSS5: 1, PSS6: 3, PSS7: 2, PSS8: 1, PSS9: 3, PSS10: 3,
+          GAD1: 2, GAD2: 2, GAD3: 2, GAD4: 2, GAD5: 1, GAD6: 2, GAD7: 1,
+          PHQ1: 1, PHQ2: 1, PHQ3: 2, PHQ4: 2, PHQ5: 1, PHQ6: 1, PHQ7: 1, PHQ8: 0, PHQ9: 0,
+        },
+      },
+      highDistress: {
+        title: "High Distress Case (Need Support)",
+        description: "Student experiencing severe anxiety & emotional distress.",
+        data: {
+          Age: "18-22",
+          Gender: "Prefer not to say",
+          University: "Devi Ahilya Vishwavidyalaya (DAVV, Indore)",
+          Department: "Business and Management Studies (BBA/MBA)",
+          Academic_Year: "Fourth Year (Semester 7 - 8)",
+          Current_CGPA: "6.00 - 6.99 (Second Class)",
+          waiver_or_scholarship: "No",
+          PSS1: 4, PSS2: 4, PSS3: 4, PSS4: 0, PSS5: 0, PSS6: 4, PSS7: 0, PSS8: 0, PSS9: 4, PSS10: 4,
+          GAD1: 3, GAD2: 3, GAD3: 3, GAD4: 3, GAD5: 2, GAD6: 3, GAD7: 2,
+          PHQ1: 3, PHQ2: 3, PHQ3: 3, PHQ4: 3, PHQ5: 2, PHQ6: 3, PHQ7: 2, PHQ8: 2, PHQ9: 1,
+        },
+      },
+    };
+
+    function App() {
+      const [view, setView] = useState('home'); // 'home' | 'assessment' | 'results'
+      const [openFaq, setOpenFaq] = useState(0);
+      const [mobileNav, setMobileNav] = useState(false);
+      const [step, setStep] = useState(1);
+      const [formData, setFormData] = useState({
+        Age: "",
+        Gender: "",
+        University: "",
+        Department: "",
+        Academic_Year: "",
+        Current_CGPA: "",
+        waiver_or_scholarship: "No",
+      });
+      const [results, setResults] = useState(null);
+      const [isLoading, setIsLoading] = useState(false);
+      const [error, setError] = useState(null);
+      const [showCrisisModal, setShowCrisisModal] = useState(false);
+      const [expandedProbs, setExpandedProbs] = useState({});
+
+      const handleFieldChange = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+        if (error) setError(null);
+      };
+
+      const handleLoadPreset = (key) => {
+        setFormData(PRESET_PROFILES[key].data);
+        setError(null);
+        setView('assessment');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      const handleReset = () => {
+        setFormData({
+          Age: "",
+          Gender: "",
+          University: "",
+          Department: "",
+          Academic_Year: "",
+          Current_CGPA: "",
+          waiver_or_scholarship: "No",
+        });
+        setResults(null);
+        setStep(1);
+        setError(null);
+        setView('assessment');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      const handleNavigateSection = (secId) => {
+        setMobileNav(false);
+        if (view !== 'home') {
+          setView('home');
+          setTimeout(() => {
+            const el = document.getElementById(secId);
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+          }, 80);
+        } else {
+          const el = document.getElementById(secId);
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }
+      };
+
+      const handleSubmit = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+          const res = await fetch('/predict', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData),
+          });
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.detail || `Server returned error code ${res.status}`);
+          }
+          const data = await res.json();
+          setResults(data);
+          setView('results');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          if (data.overall_summary && data.overall_summary.crisis_flag) {
+            setShowCrisisModal(true);
+          }
+        } catch (err) {
+          setError(err.message || "Failed to calculate prediction. Please make sure the backend is running.");
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      const isDemographicsComplete =
+        formData.Age &&
+        formData.Gender &&
+        formData.University &&
+        formData.Department &&
+        formData.Academic_Year &&
+        formData.Current_CGPA &&
+        formData.waiver_or_scholarship !== undefined;
+
+      const pssAnswered = PSS_QUESTIONS.filter(q => formData[q.id] !== undefined && formData[q.id] !== null).length;
+      const gadAnswered = GAD_QUESTIONS.filter(q => formData[q.id] !== undefined && formData[q.id] !== null).length;
+      const phqAnswered = PHQ_QUESTIONS.filter(q => formData[q.id] !== undefined && formData[q.id] !== null).length;
+
+      return (
+        <div className="min-h-screen flex flex-col">
+          {/* Top Navbar */}
+          <header className="bg-white/95 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+              {/* Brand */}
+              <div
+                className="flex items-center space-x-3 cursor-pointer select-none"
+                onClick={() => { setView('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+              >
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-700 to-indigo-500 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-indigo-200">
+                  🌱
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-extrabold text-xl sm:text-2xl tracking-tight text-slate-900">
+                      saathi<span className="text-indigo-600">-wellbeing</span>
+                    </span>
+                    <span className="bg-indigo-100 text-indigo-800 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                      India AI
+                    </span>
+                  </div>
+                  <p className="text-[10px] sm:text-[11px] font-bold text-indigo-600 tracking-widest uppercase">
+                    A Little Space For You
+                  </p>
+                </div>
+              </div>
+
+              {/* Center Nav Links (Desktop) */}
+              <nav className="hidden lg:flex items-center space-x-7 text-sm font-semibold text-slate-600">
+                <button
+                  type="button"
+                  onClick={() => { setView('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  className={`transition-colors hover:text-indigo-600 ${view === 'home' ? 'text-indigo-600 font-bold' : ''}`}
+                >
+                  Home
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNavigateSection('features-section')}
+                  className="hover:text-indigo-600 transition-colors"
+                >
+                  Features & Scales
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNavigateSection('how-it-works')}
+                  className="hover:text-indigo-600 transition-colors"
+                >
+                  How It Works
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNavigateSection('stats-section')}
+                  className="hover:text-indigo-600 transition-colors"
+                >
+                  India Statistics
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNavigateSection('faq-section')}
+                  className="hover:text-indigo-600 transition-colors"
+                >
+                  FAQs
+                </button>
+              </nav>
+
+              {/* Right Action Bar */}
+              <div className="flex items-center space-x-3">
+                {/* Sample Student Profiles Dropdown */}
+                <div className="relative group">
+                  <button
+                    type="button"
+                    className="flex items-center space-x-1.5 px-3 py-2 rounded-xl border border-indigo-200 bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition"
+                  >
+                    <span>⚡ Sample Profiles</span>
+                  </button>
+                  <div className="absolute right-0 mt-1 w-72 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 hidden group-hover:block transition z-50">
+                    <div className="px-3.5 py-1.5 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      Autofill Indian Student Profile
+                    </div>
+                    {Object.entries(PRESET_PROFILES).map(([key, profile]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => handleLoadPreset(key)}
+                        className="w-full text-left px-3.5 py-2 text-xs hover:bg-indigo-50 hover:text-indigo-700 transition flex flex-col"
+                      >
+                        <span className="font-bold text-slate-800">{profile.title}</span>
+                        <span className="text-[11px] text-slate-500">{profile.description}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Primary CTA button */}
+                {view === 'home' ? (
+                  <button
+                    type="button"
+                    onClick={() => { setView('assessment'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    className="flex items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md shadow-indigo-200 transition"
+                  >
+                    <span>Take Assessment →</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => { setView('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs transition"
+                  >
+                    Back to Home
+                  </button>
+                )}
+              </div>
+            </div>
+          </header>
+
+          {/* VIEW 1: HOMEPAGE */}
+          {view === 'home' && (
+            <div className="flex-1 animate-fade-in">
+              {/* HERO SECTION */}
+              <section className="relative overflow-hidden bg-gradient-to-b from-indigo-50/70 via-white to-slate-50 pt-16 pb-20 px-4 sm:px-6 lg:px-8 text-center">
+                {/* Background glow orbs */}
+                <div className="absolute top-10 left-1/4 w-72 h-72 bg-indigo-200/40 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute top-20 right-1/4 w-72 h-72 bg-violet-200/30 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="relative max-w-4xl mx-auto space-y-6">
+                  {/* Badge */}
+                  <div className="inline-flex items-center space-x-2 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold px-4 py-2 rounded-full shadow-xs">
+                    <span>✨ India's AI Student Mental Health Screening Platform</span>
+                    <span className="bg-indigo-600 text-white text-[9px] px-1.5 py-0.5 rounded-full font-black uppercase">Free & Private</span>
+                  </div>
+
+                  {/* Headline */}
+                  <h1 className="text-4xl sm:text-6xl font-black text-slate-900 tracking-tight leading-tight">
+                    Your mental health matters.{' '}
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-800">
+                      A little space for you.
+                    </span>
+                  </h1>
+
+                  <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+                    A compassionate, clinically-grounded screening tool built for students at{' '}
+                    <strong className="text-slate-800">Devi Ahilya Vishwavidyalaya (DAVV, Indore)</strong> and universities across India.
+                    Assess your Depression (PHQ-9), Anxiety (GAD-7), and Stress (PSS-10) with complete anonymity.
+                  </p>
+
+                  {/* Hero CTA buttons */}
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => { setView('assessment'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      className="px-8 py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-base shadow-xl shadow-indigo-200 hover:shadow-indigo-300 transition-all flex items-center space-x-2"
+                    >
+                      <span>Start Free Assessment</span>
+                      <span>➔</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleNavigateSection('how-it-works')}
+                      className="px-6 py-4 rounded-2xl border border-slate-300 hover:border-indigo-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm transition"
+                    >
+                      How It Works (4 Steps)
+                    </button>
+                  </div>
+
+                  {/* Trust pills */}
+                  <div className="flex flex-wrap items-center justify-center gap-2 pt-4 text-xs font-semibold text-slate-600">
+                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-full">
+                      ✓ Validated Scales: PHQ-9, GAD-7, PSS-10
+                    </span>
+                    <span className="bg-violet-50 text-violet-700 border border-violet-200 px-3 py-1.5 rounded-full">
+                      🔒 Zero Data Stored — 100% Private
+                    </span>
+                    <span className="bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1.5 rounded-full">
+                      🎓 Calibrated for Indian 0–10 CGPA
+                    </span>
+                  </div>
+
+                  {/* Quick Stats Grid */}
+                  <div className="mt-12 bg-white/80 backdrop-blur-sm border border-slate-200/80 rounded-3xl p-6 grid grid-cols-2 sm:grid-cols-4 gap-6 shadow-sm">
+                    <div>
+                      <div className="text-2xl sm:text-3xl font-black text-indigo-600">150M+</div>
+                      <div className="text-xs text-slate-500 font-semibold mt-0.5">Indians Affected</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl sm:text-3xl font-black text-indigo-600">1 in 7</div>
+                      <div className="text-xs text-slate-500 font-semibold mt-0.5">College Students</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl sm:text-3xl font-black text-indigo-600">3 Models</div>
+                      <div className="text-xs text-slate-500 font-semibold mt-0.5">Depression, Anxiety, Stress</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl sm:text-3xl font-black text-indigo-600">24/7</div>
+                      <div className="text-xs text-slate-500 font-semibold mt-0.5">Tele-MANAS Support</div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* FEATURES & CLINICAL SCALES */}
+              <section id="features-section" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                <div className="text-center space-y-3 mb-14">
+                  <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
+                    Clinical Rigor
+                  </span>
+                  <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                    Validated Screening Instruments
+                  </h2>
+                  <p className="text-sm text-slate-500 max-w-xl mx-auto">
+                    Built upon internationally recognized psychiatric rating scales paired with trained machine learning classifiers.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Depression */}
+                  <div className="p-7 rounded-3xl bg-white border border-slate-200 hover:border-indigo-300 shadow-sm hover:shadow-md transition space-y-4">
+                    <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-2xl font-bold">
+                      💔
+                    </div>
+                    <span className="bg-rose-50 text-rose-700 text-[10px] font-black uppercase px-2 py-0.5 rounded-full">
+                      PHQ-9 Scale
+                    </span>
+                    <h3 className="text-xl font-bold text-slate-900">Depression Screening</h3>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      9 validated questions examining mood, energy, anhedonia, and sleep disturbance over the past two weeks. Identifies mild to severe symptoms.
+                    </p>
+                  </div>
+
+                  {/* Anxiety */}
+                  <div className="p-7 rounded-3xl bg-white border border-slate-200 hover:border-indigo-300 shadow-sm hover:shadow-md transition space-y-4">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-2xl font-bold">
+                      🧠
+                    </div>
+                    <span className="bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase px-2 py-0.5 rounded-full">
+                      GAD-7 Scale
+                    </span>
+                    <h3 className="text-xl font-bold text-slate-900">Anxiety Assessment</h3>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      7 diagnostic criteria focusing on uncontrollable worry, restlessness, irritability, and physiological anxiety reactions in student environments.
+                    </p>
+                  </div>
+
+                  {/* Stress */}
+                  <div className="p-7 rounded-3xl bg-white border border-slate-200 hover:border-indigo-300 shadow-sm hover:shadow-md transition space-y-4">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-2xl font-bold">
+                      🔥
+                    </div>
+                    <span className="bg-amber-50 text-amber-700 text-[10px] font-black uppercase px-2 py-0.5 rounded-full">
+                      PSS-10 Scale
+                    </span>
+                    <h3 className="text-xl font-bold text-slate-900">Perceived Stress (PSS)</h3>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      10 questions assessing your perceived control over unexpected problems, academic deadlines, and day-to-day pressure over the past month.
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* HOW IT WORKS */}
+              <section id="how-it-works" className="py-20 bg-slate-100/60 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto">
+                  <div className="text-center space-y-3 mb-14">
+                    <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
+                      Step-by-Step Flow
+                    </span>
+                    <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                      How saathi-wellbeing Works
+                    </h2>
+                    <p className="text-sm text-slate-500 max-w-xl mx-auto">
+                      Four structured steps taking less than 5 minutes to generate your confidential report.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-3">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white font-black text-sm flex items-center justify-center">
+                        01
+                      </div>
+                      <h4 className="font-bold text-slate-900">Student Profile</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Select your Indian university (DAVV Indore, IIT, NIT, etc.), branch, and CGPA on the 0–10 scale.
+                      </p>
+                    </div>
+
+                    <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500 text-white font-black text-sm flex items-center justify-center">
+                        02
+                      </div>
+                      <h4 className="font-bold text-slate-900">PSS-10 Survey</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Answer 10 short items rating your stress levels, perceived control, and coping balance.
+                      </p>
+                    </div>
+
+                    <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-3">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-500 text-white font-black text-sm flex items-center justify-center">
+                        03
+                      </div>
+                      <h4 className="font-bold text-slate-900">GAD-7 Survey</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Respond to 7 questions capturing anxiety frequency, nervousness, and sleep disruption.
+                      </p>
+                    </div>
+
+                    <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white font-black text-sm flex items-center justify-center">
+                        04
+                      </div>
+                      <h4 className="font-bold text-slate-900">PHQ-9 & AI Report</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Complete 9 depression items and receive an instant multi-dimensional risk analysis with coping guidance.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* INDIA STATISTICS */}
+              <section id="stats-section" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                <div className="text-center space-y-3 mb-14">
+                  <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
+                    National Perspective
+                  </span>
+                  <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                    Mental Health in Indian Higher Education
+                  </h2>
+                  <p className="text-sm text-slate-500 max-w-xl mx-auto">
+                    Understanding the scale of emotional strain empowers students to seek support without hesitation.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-900 to-indigo-950 text-white space-y-2">
+                    <div className="text-3xl font-black text-indigo-300">150 Million+</div>
+                    <div className="text-sm font-bold">Indians Require Mental Health Support</div>
+                    <p className="text-xs text-indigo-200 leading-relaxed">
+                      National Mental Health Survey (NMHS) reported nearly 10% of India's adult population experiences a mental health disorder.
+                    </p>
+                  </div>
+
+                  <div className="p-6 rounded-3xl bg-gradient-to-br from-purple-900 to-purple-950 text-white space-y-2">
+                    <div className="text-3xl font-black text-purple-300">1 In 7</div>
+                    <div className="text-sm font-bold">University Students Face Severe Distress</div>
+                    <p className="text-xs text-purple-200 leading-relaxed">
+                      Academic competition, parental expectations, and career uncertainties create heightened vulnerability among collegiate youth.
+                    </p>
+                  </div>
+
+                  <div className="p-6 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 text-white space-y-2">
+                    <div className="text-3xl font-black text-emerald-400">80% Stigma Gap</div>
+                    <div className="text-sm font-bold">Never Seek Clinical Intervention</div>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      Confidential self-screening provides an approachable bridge for students to acknowledge symptoms early.
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* FAQS */}
+              <section id="faq-section" className="py-20 bg-slate-50 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-4xl mx-auto space-y-8">
+                  <div className="text-center space-y-3">
+                    <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
+                      Got Questions?
+                    </span>
+                    <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                      Frequently Asked Questions
+                    </h2>
+                  </div>
+
+                  <div className="space-y-3">
+                    {[
+                      {
+                        q: "Is saathi-wellbeing a medical diagnosis?",
+                        a: "No. saathi-wellbeing is strictly an educational self-screening and awareness platform. It utilizes validated clinical scales (PHQ-9, GAD-7, PSS-10) to identify symptom trends, but only a certified clinical psychologist or psychiatrist can diagnose a clinical condition."
+                      },
+                      {
+                        q: "Is my demographic and survey data stored on a database?",
+                        a: "No data is saved to a persistent database or sold to third parties. Predictions are computed on-the-fly and discarded when you refresh your browser session. Complete confidentiality is guaranteed."
+                      },
+                      {
+                        q: "Why is Devi Ahilya Vishwavidyalaya (DAVV) featured?",
+                        a: "saathi-wellbeing was developed specifically with DAVV (Indore) and Indian academic frameworks in mind, incorporating local counseling resources, department structures, and the standard 0–10 CGPA criteria."
+                      },
+                      {
+                        q: "How does the machine learning classification work?",
+                        a: "The backend uses three trained Linear Support Vector Classifier (SVC) models saved as joblib artifacts. Preprocessing encoders convert categorical student attributes into numerical vectors, which feed the trained decision boundaries."
+                      },
+                      {
+                        q: "What should I do if my score indicates elevated risk?",
+                        a: "We strongly recommend contacting your university student counseling center or calling India's national mental health helpline Tele-MANAS toll-free at 14416 (or 1800-891-4416), available 24/7 across multiple Indian languages."
+                      }
+                    ].map((item, idx) => (
+                      <div key={idx} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                        <button
+                          type="button"
+                          onClick={() => setOpenFaq(openFaq === idx ? -1 : idx)}
+                          className="w-full text-left p-5 font-bold text-sm text-slate-800 flex justify-between items-center"
+                        >
+                          <span>{item.q}</span>
+                          <span className="text-indigo-600 font-bold ml-2">{openFaq === idx ? '−' : '+'}</span>
+                        </button>
+                        {openFaq === idx && (
+                          <div className="px-5 pb-5 text-xs text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                            {item.a}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Ready to Assess CTA Banner */}
+                  <div className="p-8 rounded-3xl bg-gradient-to-r from-indigo-700 to-indigo-900 text-white text-center space-y-4 shadow-xl">
+                    <h3 className="text-2xl font-black">Ready to Check In With Yourself?</h3>
+                    <p className="text-xs text-indigo-200 max-w-lg mx-auto leading-relaxed">
+                      Take 4 minutes to reflect honestly. There are no right or wrong answers, and your results are completely private.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => { setView('assessment'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      className="px-8 py-3.5 rounded-2xl bg-white text-indigo-900 font-extrabold text-sm hover:bg-indigo-50 shadow-md transition"
+                    >
+                      Start Mental Health Assessment Now ➔
+                    </button>
+                  </div>
+                </div>
+              </section>
+            </div>
+          )}
+
+          {/* VIEW 2 & 3: ASSESSMENT WIZARD OR RESULTS */}
+          {view !== 'home' && (
+            <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8 animate-fade-in">
+              {/* Back to Home Button */}
+              <div className="mb-4 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => { setView('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  className="inline-flex items-center space-x-1.5 text-xs font-bold text-slate-500 hover:text-indigo-600 transition"
+                >
+                  <span>← Back to Homepage</span>
+                </button>
+              </div>
+
+              {/* Top Screening Notice */}
+              {!results && (
+                <div className="mb-6 p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 flex items-start space-x-3">
+                  <span className="text-lg">ℹ️</span>
+                  <p className="leading-relaxed">
+                    <strong>Screening Notice:</strong> saathi-wellbeing is an educational risk screening tool for Indian university students. It is <strong>not</strong> a medical diagnosis. If you need urgent support in India, call Tele-MANAS toll-free at <strong>14416</strong>.
+                  </p>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {error && (
+                <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-sm flex items-start space-x-2">
+                  <span>⚠️</span>
+                  <div>
+                    <strong>Error:</strong> {error}
+                  </div>
+                </div>
+              )}
+
+            {/* Content Display: Wizard vs Dashboard */}
+            {results ? (
+              /* RESULTS DASHBOARD */
+              <div className="space-y-8 pb-12 animate-fade-in">
+                {/* Top Action Bar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
+                      saathi-wellbeing Screening Complete
+                    </span>
+                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                      Student Mental Health Screening Report
+                    </h2>
+                    <p className="text-xs font-bold text-indigo-500 tracking-widest uppercase mt-0.5">
+                      A Little Space For You
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-3 no-print">
+                    <button
+                      onClick={() => window.print()}
+                      className="px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-xs transition"
+                    >
+                      🖨️ Print / Save PDF
+                    </button>
+                    <button
+                      onClick={handleReset}
+                      className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-100 transition"
+                    >
+                      🔄 Retake Assessment
+                    </button>
+                  </div>
+                </div>
+
+                {/* Profile Pill Header */}
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap gap-2 text-xs text-slate-600">
+                  <span className="font-bold text-slate-800">Student Profile:</span>
+                  <span className="bg-slate-100 px-2.5 py-1 rounded-lg">Age: {results.demographics.Age}</span>
+                  <span className="bg-slate-100 px-2.5 py-1 rounded-lg">Gender: {results.demographics.Gender}</span>
+                  <span className="bg-slate-100 px-2.5 py-1 rounded-lg font-bold text-indigo-900">University: {results.demographics.University}</span>
+                  <span className="bg-slate-100 px-2.5 py-1 rounded-lg">Dept: {results.demographics.Department}</span>
+                  <span className="bg-slate-100 px-2.5 py-1 rounded-lg">Year: {results.demographics.Academic_Year}</span>
+                  <span className="bg-slate-100 px-2.5 py-1 rounded-lg font-bold text-slate-800">CGPA (0-10): {results.demographics.Current_CGPA}</span>
+                  <span className="bg-slate-100 px-2.5 py-1 rounded-lg">Scholarship: {results.demographics.waiver_or_scholarship}</span>
+                </div>
+
+                {/* Overall Assessment Banner */}
+                <div className={`p-6 sm:p-8 rounded-3xl border-2 ${
+                  results.overall_summary.risk_level === 'critical' ? 'bg-red-50 border-red-300' :
+                  results.overall_summary.risk_level === 'high' ? 'bg-orange-50 border-orange-300' :
+                  results.overall_summary.risk_level === 'moderate' ? 'bg-amber-50 border-amber-300' :
+                  'bg-emerald-50 border-emerald-300'
+                } space-y-4 shadow-sm`}>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                        Consolidated AI Risk Assessment
+                      </span>
+                      <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mt-0.5">
+                        {results.overall_summary.overall_risk}
+                      </h3>
+                    </div>
+                    <span className={`self-start sm:self-center px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider text-white ${
+                      results.overall_summary.risk_level === 'critical' ? 'bg-red-600' :
+                      results.overall_summary.risk_level === 'high' ? 'bg-orange-600' :
+                      results.overall_summary.risk_level === 'moderate' ? 'bg-amber-600' :
+                      'bg-emerald-600'
+                    }`}>
+                      {results.overall_summary.risk_level} severity
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <div className="bg-white/80 rounded-2xl p-4 border border-slate-200/60">
+                      <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+                        Key Observations
+                      </h4>
+                      <ul className="space-y-1.5 text-xs text-slate-700">
+                        {results.overall_summary.primary_concerns.map((item, i) => (
+                          <li key={i} className="flex items-start space-x-2">
+                            <span className="text-indigo-600 font-bold">•</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="bg-white/80 rounded-2xl p-4 border border-slate-200/60">
+                      <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+                        Recommended Actions for Indian Students
+                      </h4>
+                      <ul className="space-y-1.5 text-xs text-slate-700">
+                        {results.overall_summary.immediate_actions.map((act, i) => (
+                          <li key={i} className="flex items-start space-x-2">
+                            <span className="text-emerald-600 font-bold">✓</span>
+                            <span>{act}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3 Model Cards */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {['depression', 'anxiety', 'stress'].map((condKey) => {
+                    const cond = results[condKey];
+                    const isExpanded = expandedProbs[condKey];
+                    const sevBadge = {
+                      minimal: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                      mild: 'bg-amber-100 text-amber-800 border-amber-300',
+                      moderate: 'bg-orange-100 text-orange-800 border-orange-300',
+                      severe: 'bg-red-100 text-red-800 border-red-300',
+                    }[cond.severity_level] || 'bg-slate-100 text-slate-800';
+
+                    const levels = ['minimal', 'mild', 'moderate', 'severe'];
+                    const activeIdx = levels.indexOf(cond.severity_level.toLowerCase());
+
+                    return (
+                      <div key={condKey} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between space-y-5">
+                        <div>
+                          <div className="flex items-start justify-between gap-2 mb-3">
+                            <div>
+                              <h3 className="font-black text-base text-slate-900">
+                                {cond.condition}
+                              </h3>
+                              <p className="text-xs text-slate-500">
+                                Scale Score: <strong className="text-slate-800">{cond.clinical_score} / {cond.max_clinical_score}</strong>
+                              </p>
+                            </div>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider border ${sevBadge}`}>
+                              {cond.severity_level}
+                            </span>
+                          </div>
+
+                          <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5 mb-4">
+                            <div className="text-[11px] font-semibold text-slate-500 uppercase">
+                              Model Prediction
+                            </div>
+                            <div className="text-base font-extrabold text-slate-900 flex items-center justify-between mt-0.5">
+                              <span>{cond.predicted_label}</span>
+                              <span className="text-xs font-bold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700">
+                                {Math.round(cond.confidence * 100)}% conf
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">
+                              Clinical benchmark: {cond.clinical_interpretation}
+                            </p>
+                          </div>
+
+                          <div className="space-y-1.5 mb-4">
+                            <div className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+                              Severity Meter
+                            </div>
+                            <div className="grid grid-cols-4 gap-1 h-2.5 bg-slate-100 rounded-full p-0.5">
+                              <div className={`rounded-l-full ${activeIdx >= 0 ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+                              <div className={`${activeIdx >= 1 ? 'bg-amber-400' : 'bg-slate-200'}`} />
+                              <div className={`${activeIdx >= 2 ? 'bg-orange-500' : 'bg-slate-200'}`} />
+                              <div className={`rounded-r-full ${activeIdx >= 3 ? 'bg-red-500' : 'bg-slate-200'}`} />
+                            </div>
+                            <div className="flex justify-between text-[9px] text-slate-600 font-semibold uppercase">
+                              <span>Low</span>
+                              <span>Mild</span>
+                              <span>Mod</span>
+                              <span>High</span>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2 pt-3 border-t border-slate-100">
+                            <div className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center space-x-1">
+                              <span>✨ Coping Guidance</span>
+                            </div>
+                            <ul className="space-y-1.5">
+                              {cond.coping_strategies.map((s, idx) => (
+                                <li key={idx} className="text-xs text-slate-600 flex items-start space-x-1.5">
+                                  <span className="text-emerald-600 font-bold">✓</span>
+                                  <span>{s}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-slate-100">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedProbs(p => ({ ...p, [condKey]: !p[condKey] }))}
+                            className="w-full py-2 px-3 text-xs font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center justify-between"
+                          >
+                            <span>Class Probability Distribution</span>
+                            <span>{isExpanded ? '▲' : '▼'}</span>
+                          </button>
+
+                          {isExpanded && (
+                            <div className="mt-2 space-y-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                              {Object.entries(cond.probabilities).map(([cName, prob]) => {
+                                const pct = Math.round(prob * 100);
+                                const isBest = cName === cond.predicted_label;
+                                return (
+                                  <div key={cName} className="space-y-0.5">
+                                    <div className="flex justify-between text-[11px]">
+                                      <span className={isBest ? 'font-bold text-indigo-700' : 'text-slate-600'}>
+                                        {cName}
+                                      </span>
+                                      <span className="font-mono text-slate-700">{pct}%</span>
+                                    </div>
+                                    <div className="w-full bg-slate-200 h-1 rounded-full overflow-hidden">
+                                      <div
+                                        className={`h-full ${isBest ? 'bg-indigo-600' : 'bg-slate-400'}`}
+                                        style={{ width: `${pct}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* MANDATORY CLINICAL DISCLAIMER (INDIA) */}
+                <div className="bg-amber-50 border-2 border-amber-300 rounded-3xl p-6 sm:p-8 shadow-sm space-y-3">
+                  <div className="flex items-center space-x-2 text-amber-900 font-black text-sm uppercase tracking-wide">
+                    <span>🛡️ saathi-wellbeing • MANDATORY CLINICAL DISCLAIMER</span>
+                  </div>
+                  <p className="text-sm text-amber-950 leading-relaxed">
+                    This screening tool is intended <strong>exclusively for academic, research, and educational self-screening</strong> among Indian university students. It does <strong>not</strong> produce a psychiatric diagnosis, clinical evaluation, or treatment plan.
+                  </p>
+                  <p className="text-xs text-amber-900 leading-relaxed">
+                    If you are experiencing severe distress or thoughts of self-harm, please connect with university student counseling cells or 24/7 mental health crisis support across India:
+                  </p>
+                  <div className="pt-2 flex flex-wrap gap-4 text-xs font-bold text-amber-950">
+                    <span>📞 Tele-MANAS (Govt of India): 14416 / 1800-891-4416 (24/7 Toll-Free)</span>
+                    <span>💬 KIRAN Mental Health: 1800-599-0019</span>
+                    <span>📱 Vandrevala Foundation: 9999 666 555</span>
+                    <span>🚨 National Emergency: 112</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* SURVEY WIZARD FORM */
+              <div>
+                {/* Step Tabs Header */}
+                <div className="grid grid-cols-4 gap-2 sm:gap-4 mb-8">
+                  {[
+                    { num: 1, label: "Demographics", sub: "Profile & CGPA" },
+                    { num: 2, label: "Stress Scale", sub: "PSS-10" },
+                    { num: 3, label: "Anxiety Scale", sub: "GAD-7" },
+                    { num: 4, label: "Depression", sub: "PHQ-9" },
+                  ].map(s => {
+                    const isActive = step === s.num;
+                    const isDone = step > s.num;
+                    return (
+                      <button
+                        key={s.num}
+                        type="button"
+                        onClick={() => { if (isDone || isActive) setStep(s.num); }}
+                        disabled={!isDone && !isActive}
+                        className={`p-3 sm:p-4 rounded-2xl border text-left transition relative overflow-hidden ${
+                          isActive
+                            ? 'border-indigo-600 bg-indigo-50/80 shadow-sm ring-2 ring-indigo-500/20'
+                            : isDone
+                            ? 'border-slate-200 bg-white text-slate-700 cursor-pointer'
+                            : 'border-slate-100 bg-slate-50 text-slate-400 cursor-not-allowed'
+                        }`}
+                      >
+                        {isActive && <div className="absolute bottom-0 left-0 right-0 h-1 bg-indigo-600" />}
+                        {isDone && <div className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-500" />}
+                        <div className="flex items-center space-x-2">
+                          <span className={`w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center ${
+                            isActive ? 'bg-indigo-600 text-white' : isDone ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500'
+                          }`}>
+                            {isDone ? '✓' : s.num}
+                          </span>
+                          <div className="hidden sm:block">
+                            <div className="text-xs font-bold">{s.label}</div>
+                            <div className="text-[10px] text-slate-500">{s.sub}</div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* STEP 1: DEMOGRAPHICS */}
+                {step === 1 && (
+                  <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
+                    <div className="border-b border-slate-100 pb-4">
+                      <h2 className="text-xl font-black text-slate-900">
+                        Step 1: Student Demographics & Academic Profile
+                      </h2>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Calibrated for Indian university environments, grading criteria (0 - 10 CGPA), and academic disciplines.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      {/* Age */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                          Age Bracket
+                        </label>
+                        <select
+                          value={formData.Age}
+                          onChange={(e) => handleFieldChange('Age', e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+                        >
+                          <option value="">Select Age</option>
+                          {DEMOGRAPHIC_OPTIONS.Age.map(a => <option key={a} value={a}>{a}</option>)}
+                        </select>
+                      </div>
+
+                      {/* Gender */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                          Gender Identity
+                        </label>
+                        <div className="grid grid-cols-3 gap-2">
+                          {DEMOGRAPHIC_OPTIONS.Gender.map(g => (
+                            <button
+                              key={g}
+                              type="button"
+                              onClick={() => handleFieldChange('Gender', g)}
+                              className={`py-2 px-2 text-xs font-bold rounded-xl border transition ${
+                                formData.Gender === g
+                                  ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                                  : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                              }`}
+                            >
+                              {g}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* University (Indian Universities) */}
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                          University / Institute (Indian Academics)
+                        </label>
+                        <select
+                          value={formData.University}
+                          onChange={(e) => handleFieldChange('University', e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+                        >
+                          <option value="">Select Indian University</option>
+                          {DEMOGRAPHIC_OPTIONS.University.map(u => <option key={u} value={u}>{u}</option>)}
+                        </select>
+                      </div>
+
+                      {/* Department */}
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                          Department / Faculty
+                        </label>
+                        <select
+                          value={formData.Department}
+                          onChange={(e) => handleFieldChange('Department', e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+                        >
+                          <option value="">Select Department</option>
+                          {DEMOGRAPHIC_OPTIONS.Department.map(d => <option key={d} value={d}>{d}</option>)}
+                        </select>
+                      </div>
+
+                      {/* Academic Year */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                          Academic Year & Semester
+                        </label>
+                        <select
+                          value={formData.Academic_Year}
+                          onChange={(e) => handleFieldChange('Academic_Year', e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+                        >
+                          <option value="">Select Academic Year</option>
+                          {DEMOGRAPHIC_OPTIONS.Academic_Year.map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                      </div>
+
+                      {/* CGPA (0 to 10 Scale) */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                          Current CGPA (0 to 10 Scale)
+                        </label>
+                        <select
+                          value={formData.Current_CGPA}
+                          onChange={(e) => handleFieldChange('Current_CGPA', e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+                        >
+                          <option value="">Select CGPA Range (0 - 10 scale)</option>
+                          {DEMOGRAPHIC_OPTIONS.Current_CGPA.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+
+                      {/* Scholarship */}
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                          Receiving Tuition Waiver / Merit Scholarship?
+                        </label>
+                        <div className="grid grid-cols-2 gap-3 max-w-xs">
+                          {['No', 'Yes'].map(w => (
+                            <button
+                              key={w}
+                              type="button"
+                              onClick={() => handleFieldChange('waiver_or_scholarship', w)}
+                              className={`py-2.5 px-4 text-sm font-bold rounded-xl border transition ${
+                                formData.waiver_or_scholarship === w
+                                  ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                                  : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                              }`}
+                            >
+                              {w}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-100 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => { setStep(2); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        disabled={!isDemographicsComplete}
+                        className={`px-6 py-3 rounded-2xl font-bold text-sm shadow-md transition ${
+                          isDemographicsComplete
+                            ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100'
+                            : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                        }`}
+                      >
+                        Continue to Stress Scale (PSS-10) →
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 2: PSS-10 */}
+                {step === 2 && (
+                  <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
+                    <div className="border-b border-slate-100 pb-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="bg-indigo-100 text-indigo-700 text-xs font-black px-2.5 py-1 rounded-lg">
+                          Scale 1 of 3 • PSS-10
+                        </span>
+                        <span className="text-xs font-bold text-slate-500">
+                          {pssAnswered} of {PSS_QUESTIONS.length} answered
+                        </span>
+                      </div>
+                      <h2 className="text-xl font-black text-slate-900 mt-2">
+                        Perceived Stress Scale (PSS-10)
+                      </h2>
+                      <p className="text-xs text-slate-500 mt-1">
+                        In the last month, how often have you felt or thought a certain way?
+                      </p>
+                      <div className="mt-2 text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-slate-600 font-medium">
+                        Options: 0 = Never | 1 = Almost Never | 2 = Sometimes | 3 = Fairly Often | 4 = Very Often
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      {PSS_QUESTIONS.map((q, idx) => (
+                        <div key={q.id} className="p-4 rounded-2xl border border-slate-200 bg-white space-y-3">
+                          <div className="flex items-start space-x-2.5">
+                            <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                              {idx + 1}
+                            </span>
+                            <p className="text-sm font-semibold text-slate-800 leading-snug">{q.text}</p>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                            {PSS_OPTIONS.map(opt => {
+                              const isSel = formData[q.id] === opt.value;
+                              return (
+                                <button
+                                  key={opt.value}
+                                  type="button"
+                                  onClick={() => handleFieldChange(q.id, opt.value)}
+                                  className={`p-2 rounded-xl border text-center transition flex flex-col items-center justify-center ${
+                                    isSel
+                                      ? 'border-indigo-600 bg-indigo-50 text-indigo-900 font-bold ring-2 ring-indigo-500/20'
+                                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                                  }`}
+                                >
+                                  <span className={`w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center mb-1 ${
+                                    isSel ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'
+                                  }`}>
+                                    {opt.badge}
+                                  </span>
+                                  <span className="text-[11px] leading-tight">{opt.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => { setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50"
+                      >
+                        ← Back to Demographics
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setStep(3); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        disabled={pssAnswered < PSS_QUESTIONS.length}
+                        className={`px-6 py-3 rounded-2xl font-bold text-sm shadow-md transition ${
+                          pssAnswered === PSS_QUESTIONS.length
+                            ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100'
+                            : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                        }`}
+                      >
+                        Continue to Anxiety Scale (GAD-7) →
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 3: GAD-7 */}
+                {step === 3 && (
+                  <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
+                    <div className="border-b border-slate-100 pb-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="bg-indigo-100 text-indigo-700 text-xs font-black px-2.5 py-1 rounded-lg">
+                          Scale 2 of 3 • GAD-7
+                        </span>
+                        <span className="text-xs font-bold text-slate-500">
+                          {gadAnswered} of {GAD_QUESTIONS.length} answered
+                        </span>
+                      </div>
+                      <h2 className="text-xl font-black text-slate-900 mt-2">
+                        Generalized Anxiety Disorder Scale (GAD-7)
+                      </h2>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Over the last 2 weeks, how often have you been bothered by the following problems?
+                      </p>
+                      <div className="mt-2 text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-slate-600 font-medium">
+                        Options: 0 = Not at all | 1 = Several days | 2 = More than half the days | 3 = Nearly every day
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      {GAD_QUESTIONS.map((q, idx) => (
+                        <div key={q.id} className="p-4 rounded-2xl border border-slate-200 bg-white space-y-3">
+                          <div className="flex items-start space-x-2.5">
+                            <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                              {idx + 1}
+                            </span>
+                            <p className="text-sm font-semibold text-slate-800 leading-snug">{q.text}</p>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            {GAD_PHQ_OPTIONS.map(opt => {
+                              const isSel = formData[q.id] === opt.value;
+                              return (
+                                <button
+                                  key={opt.value}
+                                  type="button"
+                                  onClick={() => handleFieldChange(q.id, opt.value)}
+                                  className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center ${
+                                    isSel
+                                      ? 'border-indigo-600 bg-indigo-50 text-indigo-900 font-bold ring-2 ring-indigo-500/20'
+                                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                                  }`}
+                                >
+                                  <span className={`w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center mb-1 ${
+                                    isSel ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'
+                                  }`}>
+                                    {opt.badge}
+                                  </span>
+                                  <span className="text-[11px] leading-tight">{opt.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => { setStep(2); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50"
+                      >
+                        ← Back to Stress Scale
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setStep(4); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        disabled={gadAnswered < GAD_QUESTIONS.length}
+                        className={`px-6 py-3 rounded-2xl font-bold text-sm shadow-md transition ${
+                          gadAnswered === GAD_QUESTIONS.length
+                            ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100'
+                            : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                        }`}
+                      >
+                        Continue to Depression Scale (PHQ-9) →
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 4: PHQ-9 */}
+                {step === 4 && (
+                  <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
+                    <div className="border-b border-slate-100 pb-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="bg-indigo-100 text-indigo-700 text-xs font-black px-2.5 py-1 rounded-lg">
+                          Scale 3 of 3 • PHQ-9
+                        </span>
+                        <span className="text-xs font-bold text-slate-500">
+                          {phqAnswered} of {PHQ_QUESTIONS.length} answered
+                        </span>
+                      </div>
+                      <h2 className="text-xl font-black text-slate-900 mt-2">
+                        Patient Health Questionnaire (PHQ-9)
+                      </h2>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Over the last 2 weeks, how often have you been bothered by any of the following problems?
+                      </p>
+                      <div className="mt-2 text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-slate-600 font-medium">
+                        Options: 0 = Not at all | 1 = Several days | 2 = More than half the days | 3 = Nearly every day
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      {PHQ_QUESTIONS.map((q, idx) => (
+                        <div key={q.id} className="p-4 rounded-2xl border border-slate-200 bg-white space-y-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-start space-x-2.5">
+                              <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                                {idx + 1}
+                              </span>
+                              <p className="text-sm font-semibold text-slate-800 leading-snug">{q.text}</p>
+                            </div>
+                            {q.critical && (
+                              <span className="bg-red-100 text-red-700 text-[9px] font-black px-2 py-0.5 rounded-full uppercase shrink-0">
+                                Sensitive
+                              </span>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            {GAD_PHQ_OPTIONS.map(opt => {
+                              const isSel = formData[q.id] === opt.value;
+                              return (
+                                <button
+                                  key={opt.value}
+                                  type="button"
+                                  onClick={() => handleFieldChange(q.id, opt.value)}
+                                  className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center ${
+                                    isSel
+                                      ? 'border-indigo-600 bg-indigo-50 text-indigo-900 font-bold ring-2 ring-indigo-500/20'
+                                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                                  }`}
+                                >
+                                  <span className={`w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center mb-1 ${
+                                    isSel ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'
+                                  }`}>
+                                    {opt.badge}
+                                  </span>
+                                  <span className="text-[11px] leading-tight">{opt.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => { setStep(3); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50"
+                      >
+                        ← Back to Anxiety Scale
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={phqAnswered < PHQ_QUESTIONS.length || isLoading}
+                        className={`px-8 py-3.5 rounded-2xl font-black text-sm shadow-lg transition flex items-center space-x-2 ${
+                          phqAnswered === PHQ_QUESTIONS.length && !isLoading
+                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200'
+                            : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                        }`}
+                      >
+                        {isLoading ? (
+                          <span>Analyzing Screening in saathi-wellbeing...</span>
+                        ) : (
+                          <span>Generate Clinical Mental Health Screening Report 🎯</span>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </main>
+          )}
+
+          {/* Safety Alert Modal */}
+          {showCrisisModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+              <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-red-200 space-y-4">
+                <div className="flex items-center space-x-3 text-red-600">
+                  <div className="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center text-2xl font-bold">
+                    ⚠️
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-slate-900 tracking-tight">
+                      Support Is Available Right Now In India
+                    </h3>
+                    <p className="text-xs text-red-600 font-bold uppercase tracking-wider">
+                      saathi-wellbeing • Immediate Care
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  {results?.overall_summary?.crisis_message ||
+                    'Your responses indicated significant distress or thoughts of self-harm. Please know that you are not alone and confidential help is ready 24/7 across India.'}
+                </p>
+
+                <div className="space-y-2 bg-red-50/70 border border-red-100 rounded-2xl p-4 text-xs font-bold text-slate-800">
+                  <div className="flex justify-between items-center">
+                    <span>Tele-MANAS (Govt of India 24/7):</span>
+                    <span className="text-red-700 bg-red-100 px-2 py-0.5 rounded font-mono">14416 / 1800-891-4416</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>KIRAN Mental Health:</span>
+                    <span className="text-red-700 bg-red-100 px-2 py-0.5 rounded font-mono">1800-599-0019</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Vandrevala Foundation (WhatsApp/Call):</span>
+                    <span className="text-red-700 bg-red-100 px-2 py-0.5 rounded font-mono">9999 666 555</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>AASRA Helpline:</span>
+                    <span className="text-red-700 bg-red-100 px-2 py-0.5 rounded font-mono">+91-9820466726</span>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex gap-3">
+                  <button
+                    onClick={() => setShowCrisisModal(false)}
+                    className="w-full py-3 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition"
+                  >
+                    I Understand & View My Report
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Platform Footer */}
+          <footer className="bg-slate-900 text-slate-300 no-print mt-auto">
+            {/* National Crisis Strip */}
+            <div className="bg-gradient-to-r from-indigo-700 via-violet-700 to-purple-700 py-4 px-4 sm:px-6 lg:px-8">
+              <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 text-center md:text-left">
+                <div>
+                  <p className="text-white font-extrabold text-sm">Need immediate emotional support? Free, 24/7 National Helplines:</p>
+                  <p className="text-indigo-200 text-xs">Tele-MANAS (Govt. of India) • KIRAN • Vandrevala Foundation</p>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2 text-xs font-mono font-bold">
+                  <span className="bg-white/20 text-white px-3 py-1 rounded-lg">Tele-MANAS: 14416</span>
+                  <span className="bg-white/20 text-white px-3 py-1 rounded-lg">KIRAN: 1800-599-0019</span>
+                  <span className="bg-white/20 text-white px-3 py-1 rounded-lg">Vandrevala: 9999 666 555</span>
+                  <span className="bg-red-500/80 text-white px-3 py-1 rounded-lg">Emergency: 112</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Footer Links */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                {/* Brand Info */}
+                <div className="md:col-span-2 space-y-3">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-indigo-600 flex items-center justify-center font-bold text-lg text-white">
+                      🌱
+                    </div>
+                    <div>
+                      <div className="font-extrabold text-lg text-white">
+                        saathi<span className="text-indigo-400">-wellbeing</span>
+                      </div>
+                      <div className="text-[10px] font-bold text-indigo-400 tracking-widest uppercase">
+                        A Little Space For You
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
+                    An AI-powered student mental health screening platform designed for Indian collegiate academics.
+                    Calibrated for Devi Ahilya Vishwavidyalaya (DAVV, Indore) and higher education institutions across India.
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    © 2024 saathi-wellbeing. Built for students with care.
+                  </p>
+                </div>
+
+                {/* Clinical Tools */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">Clinical Scales</h4>
+                  <ul className="space-y-1.5 text-xs text-slate-400">
+                    <li>• PHQ-9 (Depression Inventory)</li>
+                    <li>• GAD-7 (Anxiety Measure)</li>
+                    <li>• PSS-10 (Perceived Stress Scale)</li>
+                    <li>• 0–10 Indian CGPA Normalization</li>
+                    <li>• Linear SVC ML Classification</li>
+                  </ul>
+                </div>
+
+                {/* Campus Resources */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">Campus Care</h4>
+                  <ul className="space-y-1.5 text-xs text-slate-400">
+                    <li>• DAVV Student Welfare Center</li>
+                    <li>• Devi Ahilya Health Center, Indore</li>
+                    <li>• Department Faculty Mentors</li>
+                    <li>• Tele-MANAS Multilingual Lines</li>
+                    <li>• Strictly Private & Anonymous</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Legal Disclaimer */}
+              <div className="mt-8 pt-6 border-t border-slate-800 text-center text-[11px] text-slate-500 leading-relaxed">
+                Notice: saathi-wellbeing is an educational screening system. It is not an alternative to psychiatric assessment or medical diagnosis. If you or someone you know is in distress, please reach out to India's 24/7 Tele-MANAS helpline at 14416.
+              </div>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
